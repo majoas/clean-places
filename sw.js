@@ -1,4 +1,4 @@
-const CACHE = 'clean-places-v4-location-diagnose';
+const CACHE = 'clean-places-v5-location-marker';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', event => {

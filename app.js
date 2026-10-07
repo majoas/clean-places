@@ -3,6 +3,8 @@ const STORAGE_KEY = 'cleanPlacesGoogleMapsApiKey';
 const els = {};
 let map = null;
 let markers = [];
+let userLocationMarker = null;
+let userAccuracyCircle = null;
 let currentPosition = null;
 let googleReady = false;
 let activePlaceId = null;
@@ -137,6 +139,7 @@ async function toggleCurrentLocation() {
   navigator.geolocation.getCurrentPosition(
     pos => {
       currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      renderUserLocation(pos);
       els.locationInput.value = 'Aktueller Standort';
       els.locationInput.disabled = true;
       els.radiusWrap.classList.remove('hidden');
@@ -149,33 +152,67 @@ async function toggleCurrentLocation() {
     err => {
       els.useLocationButton.textContent = '◎ Aktueller Standort';
 
-      const errorNames = {
-        1: 'PERMISSION_DENIED',
-        2: 'POSITION_UNAVAILABLE',
-        3: 'TIMEOUT'
+      const messages = {
+        1: 'Standortzugriff wurde nicht erlaubt.',
+        2: 'Dein Standort ist derzeit nicht verfügbar.',
+        3: 'Die Standortbestimmung hat zu lange gedauert.'
       };
-      const errorName = errorNames[err.code] || 'UNKNOWN';
-      const standalone =
-        window.matchMedia('(display-mode: standalone)').matches ||
-        window.navigator.standalone === true;
-      const secure = window.isSecureContext === true;
-      const geoAvailable = 'geolocation' in navigator;
-      const originalMessage = err.message ? `\nWebKit: ${err.message}` : '';
-
-      showStatus(
-        `Geolocation-Fehler ${err.code} (${errorName})` +
-        `\nStandalone-Web-App: ${standalone ? 'ja' : 'nein'}` +
-        `\nSicherer Kontext (HTTPS): ${secure ? 'ja' : 'nein'}` +
-        `\nGeolocation API: ${geoAvailable ? 'verfügbar' : 'nicht verfügbar'}` +
-        originalMessage
-      );
+      showStatus(messages[err.code] || 'Standort konnte nicht bestimmt werden.');
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
 }
 
+
+function renderUserLocation(pos) {
+  if (!map || !window.google?.maps) return;
+
+  const center = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+  if (userLocationMarker) userLocationMarker.setMap(null);
+  if (userAccuracyCircle) userAccuracyCircle.setMap(null);
+
+  userAccuracyCircle = new google.maps.Circle({
+    map,
+    center,
+    radius: Math.max(pos.coords.accuracy || 0, 1),
+    strokeColor: '#1a73e8',
+    strokeOpacity: 0.35,
+    strokeWeight: 1,
+    fillColor: '#1a73e8',
+    fillOpacity: 0.10,
+    clickable: false,
+    zIndex: 1
+  });
+
+  userLocationMarker = new google.maps.Marker({
+    map,
+    position: center,
+    title: 'Dein Standort',
+    clickable: false,
+    zIndex: 1000,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 8,
+      fillColor: '#1a73e8',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeOpacity: 1,
+      strokeWeight: 3
+    }
+  });
+}
+
 function deactivateCurrentLocation() {
   currentPosition = null;
+  if (userLocationMarker) {
+    userLocationMarker.setMap(null);
+    userLocationMarker = null;
+  }
+  if (userAccuracyCircle) {
+    userAccuracyCircle.setMap(null);
+    userAccuracyCircle = null;
+  }
   els.locationInput.disabled = false;
   els.locationInput.value = '';
   els.radiusWrap.classList.add('hidden');
