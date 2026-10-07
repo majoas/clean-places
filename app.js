@@ -185,22 +185,50 @@ function renderUserLocation(pos) {
     zIndex: 1
   });
 
-  userLocationMarker = new google.maps.Marker({
-    map,
-    position: center,
-    title: 'Dein Standort',
-    clickable: false,
-    zIndex: 1000,
-    icon: {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 8,
-      fillColor: '#1a73e8',
-      fillOpacity: 1,
-      strokeColor: '#ffffff',
-      strokeOpacity: 1,
-      strokeWeight: 3
+  class UserLocationOverlay extends google.maps.OverlayView {
+    constructor(position, mapInstance) {
+      super();
+      this.position = position;
+      this.div = null;
+      this.setMap(mapInstance);
     }
-  });
+
+    onAdd() {
+      const div = document.createElement('div');
+      div.setAttribute('aria-label', 'Dein Standort');
+      Object.assign(div.style, {
+        position: 'absolute',
+        width: '16px',
+        height: '16px',
+        borderRadius: '50%',
+        background: '#1a73e8',
+        border: '3px solid #ffffff',
+        boxSizing: 'border-box',
+        boxShadow: '0 1px 4px rgba(0,0,0,.45)',
+        pointerEvents: 'none'
+      });
+      this.div = div;
+      this.getPanes().overlayMouseTarget.appendChild(div);
+    }
+
+    draw() {
+      if (!this.div) return;
+      const projection = this.getProjection();
+      const point = projection.fromLatLngToDivPixel(this.position);
+      if (!point) return;
+      this.div.style.left = `${point.x - 8}px`;
+      this.div.style.top = `${point.y - 8}px`;
+    }
+
+    onRemove() {
+      if (this.div) {
+        this.div.remove();
+        this.div = null;
+      }
+    }
+  }
+
+  userLocationMarker = new UserLocationOverlay(center, map);
 }
 
 function deactivateCurrentLocation() {
