@@ -61,6 +61,15 @@ function bindEvents() {
   els.searchButton.addEventListener('click', searchPlaces);
   els.queryInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchPlaces(); });
   els.locationInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchPlaces(); });
+  els.ratingSelect.addEventListener('change', updateSearchHint);
+  updateSearchHint();
+}
+
+function updateSearchHint() {
+  const minRating = Number(els.ratingSelect.value);
+  els.searchHint.textContent = minRating > 0
+    ? `Bewertungen unter ${minRating.toFixed(1).replace('.', ',')} werden serverseitig ausgeschlossen.`
+    : 'Keine Mindestbewertung gesetzt.';
 }
 
 function saveApiKey() {
