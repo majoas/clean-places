@@ -148,8 +148,27 @@ async function toggleCurrentLocation() {
     },
     err => {
       els.useLocationButton.textContent = '◎ Aktueller Standort';
-      const reason = err.code === 1 ? 'Standortzugriff wurde nicht erlaubt.' : 'Standort konnte nicht bestimmt werden.';
-      showStatus(reason);
+
+      const errorNames = {
+        1: 'PERMISSION_DENIED',
+        2: 'POSITION_UNAVAILABLE',
+        3: 'TIMEOUT'
+      };
+      const errorName = errorNames[err.code] || 'UNKNOWN';
+      const standalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+      const secure = window.isSecureContext === true;
+      const geoAvailable = 'geolocation' in navigator;
+      const originalMessage = err.message ? `\nWebKit: ${err.message}` : '';
+
+      showStatus(
+        `Geolocation-Fehler ${err.code} (${errorName})` +
+        `\nStandalone-Web-App: ${standalone ? 'ja' : 'nein'}` +
+        `\nSicherer Kontext (HTTPS): ${secure ? 'ja' : 'nein'}` +
+        `\nGeolocation API: ${geoAvailable ? 'verfügbar' : 'nicht verfügbar'}` +
+        originalMessage
+      );
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
