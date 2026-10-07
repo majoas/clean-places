@@ -68,7 +68,7 @@ function bindEvents() {
 function updateSearchHint() {
   const minRating = Number(els.ratingSelect.value);
   els.searchHint.textContent = minRating > 0
-    ? `Bewertungen unter ${minRating.toFixed(1).replace('.', ',')} werden serverseitig ausgeschlossen.`
+    ? `Mindestens ${minRating.toFixed(1).replace('.', ',')} ★ – Ergebnisse werden strikt nachgefiltert.`
     : 'Keine Mindestbewertung gesetzt.';
 }
 
@@ -173,6 +173,10 @@ async function searchPlaces() {
   const type = els.typeSelect.value;
   const locationText = currentPosition ? '' : els.locationInput.value.trim();
   const minRating = Number(els.ratingSelect.value);
+  // Google Places accepts minRating effectively in 0.5-star steps and rounds other
+  // values upward. Send the next lower 0.5 step so valid places are never lost;
+  // the exact 0.1 threshold is enforced locally below.
+  const googleMinRating = minRating > 0 ? Math.floor((minRating + 1e-9) * 2) / 2 : 0;
   const minReviews = Math.max(0, Number(els.reviewsInput.value) || 0);
   const openNow = els.openNowCheckbox.checked;
   const strictType = els.strictTypeCheckbox.checked && Boolean(type);
@@ -209,7 +213,7 @@ async function searchPlaces() {
       request.includedType = type;
       request.useStrictTypeFiltering = strictType;
     }
-    if (minRating > 0) request.minRating = minRating;
+    if (googleMinRating > 0) request.minRating = googleMinRating;
     if (openNow) request.isOpenNow = true;
     if (currentPosition) request.locationRestriction = boundsAround(currentPosition, radiusKm);
 
