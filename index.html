@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f7f5" />
+  <meta name="description" content="Werbefreie Google-Places-Suche mit harten Bewertungsfiltern." />
+  <title>Clean Places</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Google Places · ohne gesponserte Treffer</div>
+        <h1>Clean Places</h1>
+      </div>
+      <button id="settingsButton" class="icon-button" type="button" aria-label="Einstellungen">⚙︎</button>
+    </header>
+
+    <main>
+      <section class="search-panel card">
+        <div class="grid two">
+          <label>
+            <span>Was suchst du?</span>
+            <input id="queryInput" type="search" value="Bäckerei" placeholder="z. B. Bäckerei, Café, Restaurant" autocomplete="off" />
+          </label>
+          <label>
+            <span>Kategorie</span>
+            <select id="typeSelect">
+              <option value="bakery" selected>Bäckerei</option>
+              <option value="cafe">Café</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="bar">Bar</option>
+              <option value="supermarket">Supermarkt</option>
+              <option value="pharmacy">Apotheke</option>
+              <option value="drugstore">Drogerie</option>
+              <option value="gas_station">Tankstelle</option>
+              <option value="gym">Fitnessstudio</option>
+              <option value="bicycle_store">Fahrradgeschäft</option>
+              <option value="">Beliebig</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="location-row">
+          <label class="grow">
+            <span>Wo?</span>
+            <input id="locationInput" type="search" value="Hamburg" placeholder="Ort, Stadtteil oder Adresse" autocomplete="off" />
+          </label>
+          <button id="useLocationButton" class="secondary-button location-button" type="button">◎ Aktueller Standort</button>
+        </div>
+
+        <div id="radiusWrap" class="hidden">
+          <label>
+            <span>Radius um deinen Standort</span>
+            <select id="radiusSelect">
+              <option value="1">1 km</option>
+              <option value="2">2 km</option>
+              <option value="5" selected>5 km</option>
+              <option value="10">10 km</option>
+              <option value="20">20 km</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="filter-grid">
+          <label>
+            <span>Mindestbewertung</span>
+            <select id="ratingSelect">
+              <option value="0">egal</option>
+              <option value="3.5">3,5 ★</option>
+              <option value="4">4,0 ★</option>
+              <option value="4.5" selected>4,5 ★</option>
+              <option value="5">5,0 ★</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Mindestens Rezensionen</span>
+            <input id="reviewsInput" type="number" min="0" step="1" value="0" inputmode="numeric" />
+          </label>
+
+          <label>
+            <span>Sortierung</span>
+            <select id="sortSelect">
+              <option value="rating" selected>Bewertung</option>
+              <option value="reviews">Rezensionenzahl</option>
+              <option value="distance">Entfernung</option>
+              <option value="name">Name</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="toggles">
+          <label class="check-label"><input id="strictTypeCheckbox" type="checkbox" checked /> <span>Kategorie strikt anwenden</span></label>
+          <label class="check-label"><input id="openNowCheckbox" type="checkbox" /> <span>Nur jetzt geöffnet</span></label>
+        </div>
+
+        <div class="actions">
+          <button id="searchButton" class="primary-button" type="button">Suchen</button>
+          <span id="searchHint" class="muted">Bewertungen unter 4,5 werden serverseitig ausgeschlossen.</span>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <div class="results-column">
+          <div class="results-header">
+            <div>
+              <h2>Ergebnisse</h2>
+              <p id="resultSummary" class="muted">Noch keine Suche ausgeführt.</p>
+            </div>
+          </div>
+          <div id="statusBox" class="status hidden" role="status"></div>
+          <div id="resultsList" class="results-list"></div>
+        </div>
+        <div class="map-column card">
+          <div id="map" aria-label="Karte"></div>
+          <div id="mapPlaceholder" class="map-placeholder">
+            <strong>Karte wird nach Eingabe des API-Schlüssels geladen.</strong>
+            <span>Öffne ⚙︎ Einstellungen.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Datenquelle: Google Places. Keine Werbeplätze oder gesponserten Suchtreffer in dieser Oberfläche.</span>
+    </footer>
+  </div>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="settings-form">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">Einmalige Einrichtung</div>
+          <h2>Google Maps Platform</h2>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Schließen">×</button>
+      </div>
+
+      <p class="muted">Der Schlüssel wird nur in diesem Browser gespeichert und nicht in die App-Dateien geschrieben. Verwende unbedingt einen auf deine Website und die benötigten APIs eingeschränkten Schlüssel.</p>
+
+      <label>
+        <span>API-Schlüssel</span>
+        <input id="apiKeyInput" type="password" placeholder="AIza…" autocomplete="off" />
+      </label>
+
+      <div class="dialog-actions">
+        <button id="saveKeyButton" class="primary-button" value="cancel" type="button">Speichern & laden</button>
+        <button id="clearKeyButton" class="danger-button" value="cancel" type="button">Schlüssel löschen</button>
+      </div>
+
+      <details>
+        <summary>Welche Google-APIs müssen aktiviert sein?</summary>
+        <ol>
+          <li><strong>Maps JavaScript API</strong></li>
+          <li><strong>Places API (New)</strong></li>
+        </ol>
+        <p>Für den Schlüssel: Anwendungsbeschränkung „Websites“ und API-Beschränkung auf genau diese beiden APIs.</p>
+      </details>
+    </form>
+  </dialog>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
